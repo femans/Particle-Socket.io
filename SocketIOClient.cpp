@@ -344,15 +344,14 @@ void SocketIOClient::readLine() {
 
 
 void SocketIOClient::emit(String id, String data) {
-	String message = "42[\"" + id + "\"," + data + "]";
+	String message = "42[\"" + id + "\",\"" + data + "\"]";
+	unsigned int msglength = message.length();
 	#ifdef IODEBUG
-	Serial.println("[emit] " + message);
+	Serial.printf("[emit] " + message + " - message length: %u\n", msglength);
 	#endif
 	int header[10];
 	header[0] = 0x81;
-	uint64_t msglength = message.length();
 	#ifdef IODEBUG
-	Serial.printf("[emit] %llu\n", msglength);
 	#endif
 	randomSeed(analogRead(0));
 	String mask = "";
