@@ -32,38 +32,19 @@ OTHER DEALINGS IN THE SOFTWARE.
 #ifndef SocketIoClient_H
 #define SocketIoClient_H
 
-#include "Arduino.h"
+//#include "Arduino.h"
+#include "Particle.h"
+#include "spark_wiring_string.h"
 
-#ifndef ioDebug
-#define ioDebug true
-#endif
+#define IODEBUG
 
-#ifdef W5100
-#include <Ethernet.h>
-#include "SPI.h"					//For W5100
-#endif
-
-#ifdef ENC28J60
-#include <UIPEthernet.h>
-#include "SPI.h"					//For ENC28J60
-#endif
-
-#ifdef ESP8266
-#include <ESP8266WiFi.h>			//For ESP8266
-#endif
-
-#if !defined(W5100) && !defined(ENC28J60) && !defined(ESP8266)	//If no interface is defined
-#error "Please specify an interface such as W5100, ENC28J60, or ESP8266"
-#error "above your includes like so : #define ESP8266 "
-#endif
-
-// Length of static data buffers
+//// Length of static data buffers
 #define DATA_BUFFER_LEN 120
 #define SID_LEN 24
 
 // prototype for 'on' handlers
 // only dealing with string data at this point
-typedef void (*functionPointer)(String data);
+typedef void (*functionPointer)(String);
 
 // Maxmimum number of 'on' handlers
 #define MAX_ON_HANDLERS 8
@@ -91,9 +72,7 @@ class SocketIOClient {
     private:
         void eventHandler(int index);
         void sendHandshake(char hostname[]);
-
-        //EthernetClient internets;				//For ENC28J60 or W5100
-        WiFiClient internets;			  			//For ESP8266
+        TCPClient internets;
         bool readHandshake();
         void readLine();
         char *dataptr;

@@ -24,8 +24,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 */
 
 /*
- * Modified by RoboJay
- */
+* Modified by RoboJay
+*/
 
 #include <SocketIOClient.h>
 
@@ -75,38 +75,54 @@ void SocketIOClient::eventHandler(int index) {
 		sizemsg = databuffer[index + 2];   // 126-255 byte
 		index += 1;                        // index correction to start
 	}
-	if (ioDebug) Serial.print("[eventHandler] Message size = "); //Can be used for debugging
-	if (ioDebug) Serial.println(sizemsg);			             //Can be used for debugging
-	for (int i = index + 2; i < index + sizemsg + 2; i++) { rcvdmsg += (char)databuffer[i]; }
-	if (ioDebug) Serial.print("[eventHandler] Received message = "); //Can be used for debugging
-	if (ioDebug) Serial.println(rcvdmsg);				               //Can be used for debugging
-	switch (rcvdmsg[0]) {
-	  case '2':
-		  if (ioDebug) Serial.println("[eventHandler] Ping received - Sending Pong");
-		  heartbeat(1);
-		  break;
-	  case '3':
-		  if (ioDebug) Serial.println("[eventHandler] Pong received - All good");
-		  break;
-	  case '4':
-		  switch (rcvdmsg[1]) {
-		    case '0':
-			    if (ioDebug) Serial.println("[eventHandler] Upgrade to WebSocket confirmed");
-			    break;
-		    case '2':
-			    id = rcvdmsg.substring(4, rcvdmsg.indexOf("\","));
-          if (ioDebug){ Serial.println("[eventHandler] id = " + id); }
-          data = rcvdmsg.substring(rcvdmsg.indexOf("\",") + 3, rcvdmsg.length () - 2);
-			    if (ioDebug){ Serial.println("[eventHandler] data = " + data); }
-			    for (uint8_t i = 0; i < onIndex; i++) {
-				    if (id == onId[i]) {
-					    if (ioDebug) Serial.println("[eventHandler] Found handler = " + String(i));
-					    (*onFunction[i])(data);
-				    }
-			    }
-			    break;
-		  }
-	  }
+	#ifdef IODEBUG
+	Serial.print("[eventHandler] Message size = ");	Serial.println(sizemsg);
+	#endif
+	for (int i = index + 2; i < index + sizemsg + 2; i++) {
+		rcvdmsg += (char)databuffer[i];
+	}
+	#ifdef IODEBUG
+	Serial.print("[eventHandler] Received message = ");Serial.println(rcvdmsg);
+	#endif
+	switch (rcvdmsg.charAt(0)) {
+		case '2':
+		#ifdef IODEBUG
+		Serial.println("[eventHandler] Ping received - Sending Pong");
+		#endif
+		heartbeat(1);
+		break;
+		case '3':
+		#ifdef IODEBUG
+		Serial.println("[eventHandler] Pong received - All good");
+		#endif
+		break;
+		case '4':
+		switch (rcvdmsg.charAt(1)) {
+			case '0':
+			#ifdef IODEBUG
+			Serial.println("[eventHandler] Upgrade to WebSocket confirmed");
+			#endif
+			break;
+			case '2':
+			id = rcvdmsg.substring(4, rcvdmsg.indexOf("\","));
+			#ifdef IODEBUG
+			Serial.println("[eventHandler] id = " + id);
+			#endif
+			data = rcvdmsg.substring(rcvdmsg.indexOf("\",") + 3, rcvdmsg.length () - 2);
+			#ifdef IODEBUG
+			Serial.println("[eventHandler] data = " + data);
+			#endif
+			for (uint8_t i = 0; i < onIndex; i++) {
+				if (id == onId[i]) {
+					#ifdef IODEBUG
+					Serial.println("[eventHandler] Found handler = " + String(i));
+					#endif
+					(*onFunction[i])(data);
+				}
+			}
+			break;
+		}
+	}
 }
 
 bool SocketIOClient::monitor() {
@@ -117,12 +133,18 @@ bool SocketIOClient::monitor() {
 	static unsigned long pingTimer = 0;
 
 	if (!internets.connected()) {
-		if (ioDebug) Serial.println("[monitor] Client not connected.");
+		#ifdef IODEBUG
+		Serial.println("[monitor] Client not connected.");
+		#endif
 		if (connect(hostname, port)) {
-			if (ioDebug) Serial.println("[monitor] Connected.");
+			#ifdef IODEBUG
+			Serial.println("[monitor] Connected.");
+			#endif
 			return true;
 		} else {
-			if (ioDebug) Serial.println("[monitor] Can't connect. Aborting.");
+			#ifdef IODEBUG
+			Serial.println("[monitor] Can't connect. Aborting.");
+			#endif
 		}
 	}
 
@@ -143,7 +165,7 @@ bool SocketIOClient::monitor() {
 		if (index != -1)  { eventHandler(index); }
 		if (index2 != -1) { eventHandler(index2);}
 	}
-  return false;
+	return false;
 }
 
 void SocketIOClient::sendHandshake(char hostname[]) {
@@ -186,8 +208,10 @@ bool SocketIOClient::readHandshake() {
 	for (int i = 0; i < count; i++) {
 		sid[i] = databuffer[i + sidindex + 6];
 	}
-	if (ioDebug) Serial.print(F("[readHandshake] Connected. SID="));
-	if (ioDebug) Serial.println(sid);	// sid:transport:timeout
+	#ifdef IODEBUG
+	Serial.print(F("[readHandshake] Connected. SID="));
+	Serial.println(sid);	// sid:transport:timeout
+	#endif
 
 	while (internets.available()) readLine();
 	internets.stop();
@@ -195,10 +219,14 @@ bool SocketIOClient::readHandshake() {
 
 	// reconnect on websocket connection
 	if (!internets.connect(hostname, port)) {
-		if (ioDebug) Serial.print(F("[readHandshake] Websocket failed."));
+		#ifdef IODEBUG
+		Serial.print(F("[readHandshake] Websocket failed."));
+		#endif
 		return false;
 	}
-	if (ioDebug) Serial.println(F("[readHandshake] Connecting via Websocket"));
+	#ifdef IODEBUG
+	Serial.println(F("[readHandshake] Connecting via Websocket"));
+	#endif
 
 	internets.print(F("GET /socket.io/1/websocket/?transport=websocket&b64=true&sid="));
 	internets.print(sid);
@@ -217,41 +245,42 @@ bool SocketIOClient::readHandshake() {
 	if (!waitForInput()) { return false; }
 	readLine();
 	if (atoi(&databuffer[9]) != 101) {	// check for "HTTP/1.1 101 response, means Updrage to Websocket OK
-		while (internets.available()) { readLine(); }
-		internets.stop();
-		return false;
-	}
-	readLine();
-	readLine();
-	readLine();
-	for (int i = 0; i < 28; i++) {
-		key[i] = databuffer[i + 22];	//key contains the Sec-WebSocket-Accept, could be used for verification
-	}
-	eatHeader();
+	while (internets.available()) { readLine(); }
+	internets.stop();
+	return false;
+}
+readLine();
+readLine();
+readLine();
+for (int i = 0; i < 28; i++) {
+	key[i] = databuffer[i + 22];	//key contains the Sec-WebSocket-Accept, could be used for verification
+}
+eatHeader();
 
-	/*
-	Generating a 32 bits mask requiered for newer version
-	Client has to send "52" for the upgrade to websocket
-	*/
-	randomSeed(analogRead(0));
-	String mask = "";
-	String masked = "52";
-	String message = "52";
-	for (int i = 0; i < 4; i++) {	//generate a random mask, 4 bytes, ASCII 0 to 9
-		char a = random(48, 57);
-		mask += a;
-	}
-	for (int i = 0; i < message.length(); i++){
-		masked[i] = message[i] ^ mask[i % 4];	//apply the "mask" to the message ("52")
-  }
+/*
+Generating a 32 bits mask requiered for newer version
+Client has to send "52" for the upgrade to websocket
+*/
+randomSeed(analogRead(0));
+String mask = "";
+String masked = "52";
+String message = "52";
+for (int i = 0; i < 4; i++) {	//generate a random mask, 4 bytes, ASCII 0 to 9
+	char a = random(48, 57);
+	mask += a;
+}
+for (unsigned int i = 0; i < message.length(); i++){
+	//apply the "mask" to the message ("52")
+	masked.setCharAt(i, message.charAt(i) ^ mask.charAt(i % 4));
+}
 
-	internets.print((char)0x81);	//has to be sent for proper communication
-	internets.print((char)130);	//size of the message (2) + 128 because message has to be masked
-	internets.print(mask);
-	internets.print(masked);
+internets.print((char)0x81);	//has to be sent for proper communication
+internets.print((char)130);	//size of the message (2) + 128 because message has to be masked
+internets.print(mask);
+internets.print(masked);
 
-	monitor();		// treat the response as input
-	return true;
+monitor();		// treat the response as input
+return true;
 }
 
 void SocketIOClient::getREST(String path) {
@@ -300,8 +329,12 @@ void SocketIOClient::readLine() {
 	dataptr = databuffer;
 	while (internets.available() && (dataptr < &databuffer[DATA_BUFFER_LEN - 2])){
 		char c = internets.read();
-		if (c == 0) {if (ioDebug) Serial.print("");}
-		else if (c == 255) {if (ioDebug) Serial.println("");}
+		#ifdef IODEBUG
+		if (c == 0) {Serial.print("");}
+		#endif
+		#ifdef IODEBUG
+		else if (c == 255) {Serial.println("");}
+		#endif
 		else if (c == '\r') { ; }
 		else if (c == '\n') break;
 		else *dataptr++ = c;
@@ -312,11 +345,15 @@ void SocketIOClient::readLine() {
 
 void SocketIOClient::emit(String id, String data) {
 	String message = "42[\"" + id + "\"," + data + "]";
-	if (ioDebug) Serial.println("[emit] " + message);
+	#ifdef IODEBUG
+	Serial.println("[emit] " + message);
+	#endif
 	int header[10];
 	header[0] = 0x81;
-	int msglength = message.length();
-	if (ioDebug) Serial.println("[emit] " + String(msglength));
+	uint64_t msglength = message.length();
+	#ifdef IODEBUG
+	Serial.printf("[emit] %llu\n", msglength);
+	#endif
 	randomSeed(analogRead(0));
 	String mask = "";
 	String masked = message;
@@ -324,12 +361,13 @@ void SocketIOClient::emit(String id, String data) {
 		char a = random(48, 57);
 		mask += a;
 	}
-	for (int i = 0; i < msglength; i++){
-		masked[i] = message[i] ^ mask[i % 4];
+	for (uint64_t i = 0; i < msglength; i++){
+		//apply the "mask" to the message ("52")
+		masked.setCharAt(i, message.charAt(i) ^ mask.charAt(i % 4));
 	}
 
 	internets.print((char)header[0]);	// has to be sent for proper communication
-									                  // Depending on the size of the message
+	// Depending on the size of the message
 	if (msglength <= 125) {
 		header[1] = msglength + 128;
 		internets.print((char)header[1]);	//size of the message + 128 because message has to be masked
@@ -346,7 +384,7 @@ void SocketIOClient::emit(String id, String data) {
 		header[2] = (msglength >> 56) & 255;
 		internets.print((char)header[2]);
 		header[3] = (msglength >> 48) & 255;
-		internets.print((char)header[4]);
+		internets.print((char)header[3]);
 		header[4] = (msglength >> 40) & 255;
 		internets.print((char)header[4]);
 		header[5] = (msglength >> 32) & 255;
@@ -380,9 +418,10 @@ void SocketIOClient::heartbeat(int select) {
 		char a = random(48, 57);
 		mask += a;
 	}
-	for (int i = 0; i < message.length(); i++){
-		masked[i] = message[i] ^ mask[i % 4];	//apply the "mask" to the message ("2" : ping or "3" : pong)
-  }
+	for (unsigned int i = 0; i < message.length(); i++){
+		//apply the "mask" to the message ("2" : ping or "3" : pong)
+		masked.setCharAt(i, message.charAt(i) ^ mask.charAt(i % 4));
+	}
 	internets.print((char)0x81);	//has to be sent for proper communication
 	internets.print((char)129);	//size of the message (1) + 128 because message has to be masked
 	internets.print(mask);
@@ -395,4 +434,3 @@ void SocketIOClient::on(String id, functionPointer function) {
 	onId[onIndex] = id;
 	onIndex++;
 }
-
