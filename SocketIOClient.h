@@ -1,7 +1,9 @@
 /*
-socket.io-arduino-client: a Socket.IO client for the Arduino
+socket.io-particle-client: a Socket.IO client for the Particle Photon
+
 Based on the Kevin Rohling WebSocketClient & Bill Roy Socket.io Lbrary
 Copyright 2015 Florent Vidal
+Supports Socket.io v1.x
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without
@@ -10,11 +12,8 @@ copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the
 Software is furnished to do so, subject to the following
 conditions:
-JSON support added using https://github.com/bblanchon/ArduinoJson
-
 The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
-
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
 OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -26,8 +25,9 @@ OTHER DEALINGS IN THE SOFTWARE.
 */
 
 /*
- * Modifications by RoboJay
- */
+* Modified by RoboJay
+* and by your grandpa
+*/
 
 #ifndef SocketIoClient_H
 #define SocketIoClient_H
@@ -35,8 +35,6 @@ OTHER DEALINGS IN THE SOFTWARE.
 //#include "Arduino.h"
 #include "Particle.h"
 #include "spark_wiring_string.h"
-
-#define IODEBUG
 
 //// Length of static data buffers
 #define DATA_BUFFER_LEN 120
@@ -72,7 +70,7 @@ class SocketIOClient {
     private:
         void eventHandler(int index);
         void sendHandshake(char hostname[]);
-        TCPClient internets;
+        TCPClient tcp;
         bool readHandshake();
         void readLine();
         char *dataptr;

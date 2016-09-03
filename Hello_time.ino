@@ -1,8 +1,14 @@
 #include "SocketIOClient.h"
 SocketIOClient socket;
 
+String deviceName = "Photon";
+
 char hostname[] = "192.168.2.6";
 int port = 3030;
+
+void handler(const char *topic, const char *data) {
+	deviceName = data;
+}
 
 void hello(String data) {
 	Serial.println(data);
@@ -17,6 +23,8 @@ void setup() {
 		Serial.println("unable to connect");
 	}
 	socket.on("hello", hello);
+	Particle.subscribe("spark/", handler);
+	Particle.publish("spark/device/name");
 }
 
 const int interval = 2500;
@@ -32,10 +40,14 @@ void loop() {
 		}
 		else {
 			digitalWrite(D7, !digitalRead(D7));
-			Serial.println("sending message over socket");
-			socket.emit("message", "Hi, I am a photon");
+			socket.emit("message", "Hi, I am " + deviceName);
 		}
 	}
 
-	/*socket.monitor();*/
+	if(! socket.connected() ) {
+		Serial.println("can't monitor; no connection");
+	}
+	else {
+		socket.monitor();
+	}
 }
