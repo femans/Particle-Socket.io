@@ -331,13 +331,8 @@ void SocketIOClient::readLine() {
 	dataptr = databuffer;
 	while (tcp.available() && (dataptr < &databuffer[DATA_BUFFER_LEN - 2])){
 		char c = tcp.read();
-		#ifdef IODEBUG
-		if (c == 0) {Serial.print("");}
-		#endif
-		#ifdef IODEBUG
-		else if (c == 255) {Serial.println("");}
-		#endif
-		else if (c == '\r') { ; }
+		//TODO: figure out what should be here
+		if ((c == 0) || (c == 255) || (c == '\r')) {;}
 		else if (c == '\n') break;
 		else *dataptr++ = c;
 	}
