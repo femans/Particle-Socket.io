@@ -1,7 +1,7 @@
 #include "SocketIOClient.h"
 SocketIOClient socket;
 
-String deviceName = "Photon";
+String deviceName = Particle.deviceID();
 
 char hostname[] = "192.168.2.6";
 int port = 3030;
@@ -18,10 +18,7 @@ void hello(String data) {
 void setup() {
 	Serial.begin(115200);
 	pinMode(D7, OUTPUT);
-	if (!socket.connect(hostname, port)) {
-
-		Serial.println("unable to connect");
-	}
+	socket.connect(hostname, port);
 	socket.on("hello", hello);
 	Particle.subscribe("spark/", handler);
 	Particle.publish("spark/device/name");
@@ -44,10 +41,5 @@ void loop() {
 		}
 	}
 
-	if(! socket.connected() ) {
-		Serial.println("can't monitor; no connection");
-	}
-	else {
-		socket.monitor();
-	}
+	socket.monitor();
 }
